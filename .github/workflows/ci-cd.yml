@@ -1,0 +1,121 @@
+name: PayStream CI/CD
+
+on:
+  push:
+    branches: [main, develop, devnet]
+  pull_request:
+    branches: [main, develop, devnet]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Lint code
+        run: npm run lint --if-present
+      
+      - name: Check syntax
+        run: |
+          node -e "import('./paystream.js').then(() => console.log('✅ paystream.js OK'))"
+          node -e "import('./server.js').then(() => console.log('✅ server.js OK'))"
+          node -e "import('./execute.js').then(() => console.log('✅ execute.js OK'))"
+      
+      - name: Build
+        run: npm run build --if-present
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for secrets in code
+        run: |
+          if grep -r "AKIA\|GOOG\|SK-\|sk_\|secret" . --include="*.js" --include="*.json" --include=".env*"; then
+            echo "❌ Potential secrets found in code"
+            exit 1
+          fi
+          echo "✅ No secrets detected"
+      
+      - name: Check .env is ignored
+        run: |
+          if git status --porcelain | grep ".env"; then
+            echo "❌ .env file is not properly ignored"
+            exit 1
+          fi
+          echo "✅ .env properly ignored"
+      
+      - name: Validate package.json
+        run: |
+          node -e "require('./package.json'); console.log('✅ package.json valid')"
+
+  deploy-devnet:
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/devnet' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test --if-present
+        env:
+          NETWORK: devnet
+          QUICKNODE_RPC_URL: ${{ secrets.QUICKNODE_DEVNET_RPC }}
+          BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+      
+      - name: Deploy to development
+        run: echo "Deploy to dev environment (configure based on your setup)"
+
+  deploy-production:
+    needs: [test, security]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Production tests
+        run: npm test --if-present
+        env:
+          NETWORK: mainnet-beta
+          QUICKNODE_RPC_URL: ${{ secrets.QUICKNODE_RPC_URL }}
+          BIRDEYE_API_KEY: ${{ secrets.BIRDEYE_API_KEY }}
+      
+      - name: Deploy to production
+        run: echo "Deploy to production (configure based on your setup)"
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
