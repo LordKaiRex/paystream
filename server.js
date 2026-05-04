@@ -48,6 +48,9 @@ app.use(express.json({ limit: "1mb" }));
 // Security headers
 app.use(securityHeaders);
 
+// Serve static files (index.html, CSS, JS)
+app.use(express.static('.'));
+
 // CORS configuration
 app.use(
   cors({
@@ -86,12 +89,7 @@ try {
 // ─────────────────────────────────────────────────────────────────
 
 app.get("/", (req, res) => {
-  res.json({
-    name: "PayStream",
-    status: "running",
-    version: "1.0.0",
-    executor: executor ? "ready" : "not configured",
-  });
+  res.sendFile('index.html', { root: '.' });
 });
 
 app.get("/health", (req, res) => {
