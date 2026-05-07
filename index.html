@@ -960,6 +960,52 @@
     .mobile-menu-btn { width: 36px; height: 36px; }
     .sidebar { width: 100%; }
   }
+
+  /* Switch Toggle */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: 0.4s;
+    border-radius: 24px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(20px);
+  }
 </style>
 </head>
 <body>
@@ -1085,7 +1131,7 @@
       </div>
 
       <div class="nav-section">Settings</div>
-      <div class="nav-item">
+      <div class="nav-item" onclick="showPage('settings', this)">
         <span class="icon">⚙️</span> Settings
       </div>
     </nav>
@@ -1664,6 +1710,70 @@
         </div>
       </div>
 
+      <!-- Settings Page -->
+      <div class="page" id="page-settings">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 4px;">Settings</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Configure your PayStream preferences</p>
+        </div>
+        <div class="section-grid">
+          <div class="card">
+            <div class="card-header">
+              <div style="width: 18px; height: 18px; background: var(--accent-light); border: 2px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 10px; font-weight: 700;">⚙</div>
+              <div class="card-title">General Settings</div>
+            </div>
+            <div style="padding: 24px;">
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">Email Notifications</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Receive payment confirmations</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">Auto-withdraw Yield</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Automatically withdraw yield before payroll</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div style="width: 18px; height: 18px; background: var(--success-light); border: 2px solid var(--success); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--success); font-size: 10px; font-weight: 700;">🔐</div>
+              <div class="card-title">Security</div>
+            </div>
+            <div style="padding: 24px;">
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">Two-Factor Authentication</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Add an extra layer of security</div>
+                  </div>
+                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Enable</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">API Keys</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Manage your API access</div>
+                  </div>
+                  <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Manage</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -1691,7 +1801,8 @@
       'treasury': 'Treasury',
       'analytics': 'Analytics',
       'kamino': 'Kamino Vault',
-      'contractor': 'Contractor View'
+      'contractor': 'Contractor View',
+      'settings': 'Settings'
     };
     document.getElementById('pageTitle').textContent = titles[page];
     closeSidebar();
@@ -1705,7 +1816,8 @@
       'Treasury': 'treasury',
       'Analytics': 'analytics',
       'Kamino': 'kamino',
-      'Contractor': 'contractor'
+      'Contractor': 'contractor',
+      'Settings': 'settings'
     };
     
     document.querySelectorAll('.nav-item').forEach(item => {
