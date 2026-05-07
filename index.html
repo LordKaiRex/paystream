@@ -1015,10 +1015,11 @@
   <div class="modal">
     <div class="modal-header">
       <div>➕</div>
-      <div class="modal-title">Schedule Payment</div>
+      <div class="modal-title" id="paymentModalTitle">Schedule Payment</div>
       <div class="modal-close" onclick="closeModal('addPaymentModal')">×</div>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="inp-payment-id">
       <div class="form-group">
         <label>Contractor Name</label>
         <input type="text" placeholder="e.g. Alex Rivera" id="inp-name">
@@ -1054,7 +1055,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('addPaymentModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="addPayment()">💸 Schedule Payment</button>
+      <button class="btn btn-primary" id="paymentModalSubmit" onclick="submitPayment()">💸 Schedule Payment</button>
     </div>
   </div>
 </div>
@@ -1851,6 +1852,7 @@
 
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
+    if (id === 'addPaymentModal') resetPaymentModal();
   }
 
   function toggleSidebar() {
@@ -1902,6 +1904,7 @@
           <div class="schedule-date">Next: ${payment.nextPaymentDate}</div>
         </div>
         <div class="status-pill active" style="margin-left: 12px;">● Active</div>
+        <button class="btn btn-secondary" style="font-size: 12px; margin-left: 10px; padding: 8px 12px;" onclick="editPayment('${payment.id}')">Edit</button>
       `;
 
       scheduleList.appendChild(itemDiv);
@@ -1912,6 +1915,49 @@
     if (countSpan) {
       countSpan.textContent = `${scheduledPayments.length} active`;
     }
+  }
+
+  function submitPayment() {
+    const editId = document.getElementById('inp-payment-id').value;
+    if (editId) {
+      updatePayment(editId);
+    } else {
+      addPayment();
+    }
+  }
+
+  function editPayment(paymentId) {
+    const payment = scheduledPayments.find(p => p.id === paymentId);
+    if (!payment) return;
+
+    document.getElementById('paymentModalTitle').textContent = 'Edit Payroll Schedule';
+    document.getElementById('paymentModalSubmit').textContent = 'Save Changes';
+    document.getElementById('inp-payment-id').value = payment.id;
+    document.getElementById('inp-name').value = payment.contractorName;
+    document.getElementById('inp-wallet').value = payment.contractorWallet;
+    document.getElementById('inp-amount').value = payment.amountUSDC;
+    document.getElementById('inp-freq').value = payment.frequency;
+    document.getElementById('inp-date').value = parseDisplayDate(payment.nextPaymentDate);
+
+    openModal('addPaymentModal');
+  }
+
+  function parseDisplayDate(displayDate) {
+    if (!displayDate) return '';
+    const parsed = new Date(displayDate + ' ' + new Date().getFullYear());
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  function resetPaymentModal() {
+    document.getElementById('inp-payment-id').value = '';
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-wallet').value = '';
+    document.getElementById('inp-amount').value = '';
+    document.getElementById('inp-freq').value = 'biweekly';
+    document.getElementById('inp-date').value = '';
+    document.getElementById('paymentModalTitle').textContent = 'Schedule Payment';
+    document.getElementById('paymentModalSubmit').textContent = '💸 Schedule Payment';
   }
 
   function addPayment() {
@@ -1945,17 +1991,41 @@
     scheduledPayments.push(payment);
 
     // Clear form
-    document.getElementById('inp-name').value = '';
-    document.getElementById('inp-wallet').value = '';
-    document.getElementById('inp-amount').value = '';
-    document.getElementById('inp-freq').value = 'biweekly';
-    document.getElementById('inp-date').value = '';
+    resetPaymentModal();
 
     // Update the UI
     renderPayrollSchedule();
 
     // Show success message
     alert('Payment scheduled successfully!');
+    closeModal('addPaymentModal');
+  }
+
+  function updatePayment(paymentId) {
+    const payment = scheduledPayments.find(p => p.id === paymentId);
+    if (!payment) return;
+
+    const name = document.getElementById('inp-name').value.trim();
+    const wallet = document.getElementById('inp-wallet').value.trim();
+    const amount = parseFloat(document.getElementById('inp-amount').value);
+    const frequency = document.getElementById('inp-freq').value;
+    const date = document.getElementById('inp-date').value;
+
+    if (!name || !wallet || !amount || !date) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    payment.contractorName = name;
+    payment.contractorWallet = wallet;
+    payment.amountUSDC = amount;
+    payment.frequency = frequency;
+    payment.nextPaymentDate = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    payment.initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+    resetPaymentModal();
+    renderPayrollSchedule();
+    alert('Payroll schedule updated successfully!');
     closeModal('addPaymentModal');
   }
 
