@@ -1449,54 +1449,7 @@
             <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">12 active</span>
           </div>
           <div class="schedule-list">
-            <div class="schedule-item">
-              <div class="avatar" style="background: var(--accent);">AR</div>
-              <div class="schedule-info">
-                <div class="schedule-name">Alex Rivera <span class="tag" style="margin-left: 6px;">🇲🇽 Mexico</span></div>
-                <div class="schedule-wallet">7xKp...9aRm · Bi-weekly</div>
-              </div>
-              <div class="schedule-right">
-                <div class="schedule-amount">$3,200 / payrun</div>
-                <div class="schedule-date">Next: May 1</div>
-              </div>
-              <div class="status-pill active" style="margin-left: 12px;">● Active</div>
-            </div>
-            <div class="schedule-item">
-              <div class="avatar" style="background: #4F46E5;">MS</div>
-              <div class="schedule-info">
-                <div class="schedule-name">Maria Santos <span class="tag" style="margin-left: 6px;">🇧🇷 Brazil</span></div>
-                <div class="schedule-wallet">9pQr...2bNw · Monthly</div>
-              </div>
-              <div class="schedule-right">
-                <div class="schedule-amount">$4,500 / mo</div>
-                <div class="schedule-date">Next: May 1</div>
-              </div>
-              <div class="status-pill active" style="margin-left: 12px;">● Active</div>
-            </div>
-            <div class="schedule-item">
-              <div class="avatar" style="background: #10B981;">PN</div>
-              <div class="schedule-info">
-                <div class="schedule-name">Priya Nair <span class="tag" style="margin-left: 6px;">🇮🇳 India</span></div>
-                <div class="schedule-wallet">3mLs...7cKp · Bi-weekly</div>
-              </div>
-              <div class="schedule-right">
-                <div class="schedule-amount">$2,800 / payrun</div>
-                <div class="schedule-date">Next: May 1</div>
-              </div>
-              <div class="status-pill active" style="margin-left: 12px;">● Active</div>
-            </div>
-            <div class="schedule-item">
-              <div class="avatar" style="background: #F59E0B;">JK</div>
-              <div class="schedule-info">
-                <div class="schedule-name">James Kim <span class="tag" style="margin-left: 6px;">🇰🇷 Korea</span></div>
-                <div class="schedule-wallet">5nRt...8dPq · Weekly</div>
-              </div>
-              <div class="schedule-right">
-                <div class="schedule-amount">$1,200 / week</div>
-                <div class="schedule-date">Next: Apr 30</div>
-              </div>
-              <div class="status-pill active" style="margin-left: 12px;">● Active</div>
-            </div>
+            <!-- Payments will be rendered here dynamically -->
           </div>
         </div>
       </div>
@@ -1781,6 +1734,54 @@
 </div>
 
 <script>
+  // Local payments storage (in a real app, this would be persisted to a database)
+  let scheduledPayments = [
+    {
+      id: "pay_001",
+      contractorName: "Alex Rivera",
+      contractorWallet: "7xKpQr8mN4aBcDeFgH9iJkLmNoPqRsTuVwXyZ4mNq",
+      amountUSDC: 3200,
+      frequency: "biweekly",
+      nextPaymentDate: "May 1",
+      country: "🇲🇽 Mexico",
+      avatarBg: "var(--accent)",
+      initials: "AR"
+    },
+    {
+      id: "pay_002", 
+      contractorName: "Maria Santos",
+      contractorWallet: "9pQrAbCdEfGhIjKlMnOpQrStUvWxYz2bNw",
+      amountUSDC: 4500,
+      frequency: "monthly",
+      nextPaymentDate: "May 1",
+      country: "🇧🇷 Brazil",
+      avatarBg: "#4F46E5",
+      initials: "MS"
+    },
+    {
+      id: "pay_003",
+      contractorName: "Priya Nair", 
+      contractorWallet: "3mLsTuVwXyZ4mNq7xKpQr8mN4aBcDeFgH9iJk",
+      amountUSDC: 2800,
+      frequency: "biweekly",
+      nextPaymentDate: "May 1",
+      country: "🇮🇳 India",
+      avatarBg: "#10B981",
+      initials: "PN"
+    },
+    {
+      id: "pay_004",
+      contractorName: "James Kim",
+      contractorWallet: "5nRt8dPq7xKpQr8mN4aBcDeFgH9iJkLmNoPqRs",
+      amountUSDC: 1200,
+      frequency: "weekly", 
+      nextPaymentDate: "Apr 30",
+      country: "🇰🇷 Korea",
+      avatarBg: "#F59E0B",
+      initials: "JK"
+    }
+  ];
+
   // Page navigation
   function showPage(page, element) {
     // Hide all pages
@@ -1867,8 +1868,94 @@
   }
 
   // Placeholder functions
+  function getRandomColor() {
+    const colors = ['#22c2ff', '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  function renderPayrollSchedule() {
+    const scheduleList = document.querySelector('.schedule-list');
+    if (!scheduleList) return;
+
+    // Clear existing items
+    scheduleList.innerHTML = '';
+
+    // Add each payment
+    scheduledPayments.forEach(payment => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'schedule-item';
+
+      const frequencyText = payment.frequency === 'biweekly' ? 'Bi-weekly' : 
+                           payment.frequency === 'monthly' ? 'Monthly' : 
+                           payment.frequency === 'weekly' ? 'Weekly' : 'One-time';
+      const amountText = payment.frequency === 'once' ? `$${payment.amountUSDC.toLocaleString()}` : 
+                        `$${payment.amountUSDC.toLocaleString()} / ${payment.frequency === 'monthly' ? 'mo' : payment.frequency === 'weekly' ? 'week' : 'payrun'}`;
+
+      itemDiv.innerHTML = `
+        <div class="avatar" style="background: ${payment.avatarBg};">${payment.initials}</div>
+        <div class="schedule-info">
+          <div class="schedule-name">${payment.contractorName} <span class="tag" style="margin-left: 6px;">${payment.country}</span></div>
+          <div class="schedule-wallet">${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)} · ${frequencyText}</div>
+        </div>
+        <div class="schedule-right">
+          <div class="schedule-amount">${amountText}</div>
+          <div class="schedule-date">Next: ${payment.nextPaymentDate}</div>
+        </div>
+        <div class="status-pill active" style="margin-left: 12px;">● Active</div>
+      `;
+
+      scheduleList.appendChild(itemDiv);
+    });
+
+    // Update the count
+    const countSpan = document.querySelector('.card-header span');
+    if (countSpan) {
+      countSpan.textContent = `${scheduledPayments.length} active`;
+    }
+  }
+
   function addPayment() {
-    alert('Payment scheduled!');
+    // Get form values
+    const name = document.getElementById('inp-name').value.trim();
+    const wallet = document.getElementById('inp-wallet').value.trim();
+    const amount = parseFloat(document.getElementById('inp-amount').value);
+    const frequency = document.getElementById('inp-freq').value;
+    const date = document.getElementById('inp-date').value;
+
+    // Validate required fields
+    if (!name || !wallet || !amount || !date) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Create payment object
+    const payment = {
+      id: "pay_" + Date.now(),
+      contractorName: name,
+      contractorWallet: wallet,
+      amountUSDC: amount,
+      frequency: frequency,
+      nextPaymentDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      country: "🌍 Global", // Default country flag
+      avatarBg: getRandomColor(),
+      initials: name.split(' ').map(n => n[0]).join('').toUpperCase()
+    };
+
+    // Add to payments array
+    scheduledPayments.push(payment);
+
+    // Clear form
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-wallet').value = '';
+    document.getElementById('inp-amount').value = '';
+    document.getElementById('inp-freq').value = 'biweekly';
+    document.getElementById('inp-date').value = '';
+
+    // Update the UI
+    renderPayrollSchedule();
+
+    // Show success message
+    alert('Payment scheduled successfully!');
     closeModal('addPaymentModal');
   }
 
@@ -1897,6 +1984,9 @@
     
     // Setup navigation
     setupNavigation();
+    
+    // Render initial payroll schedule
+    renderPayrollSchedule();
   });
 </script>
 
