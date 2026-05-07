@@ -1393,7 +1393,39 @@
                 <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="openModal('addPaymentModal')">+ Add</button>
               </div>
               <div class="schedule-list" id="scheduleList">
-                <!-- Payments will be rendered here dynamically -->
+                <div class="schedule-item">
+                  <div class="avatar" style="background: var(--accent);">AR</div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">Alex Rivera</div>
+                    <div class="schedule-wallet">7xKp...9aRm</div>
+                  </div>
+                  <div class="schedule-right">
+                    <div class="schedule-amount">$3,200</div>
+                    <div class="schedule-date">May 1 · Bi-weekly</div>
+                  </div>
+                </div>
+                <div class="schedule-item">
+                  <div class="avatar" style="background: #4F46E5;">MS</div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">Maria Santos</div>
+                    <div class="schedule-wallet">9pQr...2bNw</div>
+                  </div>
+                  <div class="schedule-right">
+                    <div class="schedule-amount">$4,500</div>
+                    <div class="schedule-date">May 1 · Monthly</div>
+                  </div>
+                </div>
+                <div class="schedule-item">
+                  <div class="avatar" style="background: #10B981;">PN</div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">Priya Nair</div>
+                    <div class="schedule-wallet">3mLs...7cKp</div>
+                  </div>
+                  <div class="schedule-right">
+                    <div class="schedule-amount">$2,800</div>
+                    <div class="schedule-date">May 1 · Bi-weekly</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1842,49 +1874,41 @@
   }
 
   function renderPayrollSchedule() {
-    // Update both dashboard and payroll page schedule lists
-    const scheduleLists = document.querySelectorAll('.schedule-list');
+    const scheduleList = document.querySelector('#page-payroll .schedule-list');
+    if (!scheduleList) return;
 
-    scheduleLists.forEach(scheduleList => {
-      if (!scheduleList) return;
+    // Clear existing items
+    scheduleList.innerHTML = '';
 
-      // Clear existing items
-      scheduleList.innerHTML = '';
+    // Add each payment
+    scheduledPayments.forEach(payment => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'schedule-item';
 
-      // Determine if this is dashboard or payroll page
-      const isDashboard = scheduleList.id === 'scheduleList';
+      const frequencyText = payment.frequency === 'biweekly' ? 'Bi-weekly' :
+                           payment.frequency === 'monthly' ? 'Monthly' :
+                           payment.frequency === 'weekly' ? 'Weekly' : 'One-time';
+      const amountText = payment.frequency === 'once' ? `$${payment.amountUSDC.toLocaleString()}` :
+                        `$${payment.amountUSDC.toLocaleString()} / ${payment.frequency === 'monthly' ? 'mo' : payment.frequency === 'weekly' ? 'week' : 'payrun'}`;
 
-      // Add each payment
-      scheduledPayments.forEach(payment => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'schedule-item';
+      itemDiv.innerHTML = `
+        <div class="avatar" style="background: ${payment.avatarBg};">${payment.initials}</div>
+        <div class="schedule-info">
+          <div class="schedule-name">${payment.contractorName} <span class="tag" style="margin-left: 6px;">${payment.country}</span></div>
+          <div class="schedule-wallet">${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)} · ${frequencyText}</div>
+        </div>
+        <div class="schedule-right">
+          <div class="schedule-amount">${amountText}</div>
+          <div class="schedule-date">Next: ${payment.nextPaymentDate}</div>
+        </div>
+        <div class="status-pill active" style="margin-left: 12px;">● Active</div>
+      `;
 
-        const frequencyText = payment.frequency === 'biweekly' ? 'Bi-weekly' :
-                             payment.frequency === 'monthly' ? 'Monthly' :
-                             payment.frequency === 'weekly' ? 'Weekly' : 'One-time';
+      scheduleList.appendChild(itemDiv);
+    });
 
-        // Different formatting for dashboard vs payroll page
-        let dateDisplay, amountText;
-        if (isDashboard) {
-          // Dashboard format: "May 1 · Bi-weekly"
-          dateDisplay = `${payment.nextPaymentDate} · ${frequencyText}`;
-          amountText = `$${payment.amountUSDC.toLocaleString()}`;
-        } else {
-          // Payroll page format: "Next: May 1" with frequency in wallet line
-          dateDisplay = `Next: ${payment.nextPaymentDate}`;
-          amountText = payment.frequency === 'once' ? `$${payment.amountUSDC.toLocaleString()}` :
-                      `$${payment.amountUSDC.toLocaleString()} / ${payment.frequency === 'monthly' ? 'mo' : payment.frequency === 'weekly' ? 'week' : 'payrun'}`;
-        }
-
-        itemDiv.innerHTML = `
-          <div class="avatar" style="background: ${payment.avatarBg};">${payment.initials}</div>
-          <div class="schedule-info">
-            <div class="schedule-name">${payment.contractorName} <span class="tag" style="margin-left: 6px;">${payment.country}</span></div>
-            <div class="schedule-wallet">${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)}${isDashboard ? '' : ` · ${frequencyText}`}</div>
-          </div>
-          <div class="schedule-right">
-            <div class="schedule-amount">${amountText}</div>
-            <div class="schedule-date">${dateDisplay}</div>
+    // Update the count
+    const countSpan = document.querySelector('#page-payroll .card-header span');
     if (countSpan) {
       countSpan.textContent = `${scheduledPayments.length} active`;
     }
