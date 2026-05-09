@@ -113,13 +113,13 @@ WEBHOOK_SECRET=random_secret_string
 ADMIN_SECRET=admin_password
 NETWORK=mainnet-beta
 DEBUG=false
-FRONTEND_URL=https://your-paystream.vercel.app
+FRONTEND_URL=https://paystream-gamma.vercel.app
 ```
 
 ### 2.4 Get Your Backend URL
 
 ```
-Your deployed URL: https://paystream-[random].railway.app
+Your deployed URL: https://your-railway-backend-url.railway.app
 ```
 
 Save this URL for later.
@@ -364,10 +364,10 @@ PayStream is a production-grade Solana payroll infrastructure that:
 
 ## Live Demo
 
-- **Frontend**: https://paystream.vercel.app
-- **Backend**: https://paystream-[random].railway.app
-- **GitHub**: https://github.com/your-username/paystream
-- **Demo Video**: https://www.youtube.com/watch?v=...
+- **Frontend**: https://paystream-gamma.vercel.app
+- **Backend**: https://your-paystream-backend.railway.app
+- **GitHub**: https://github.com/LordKaiRex/paystream
+- **Demo Video**: https://www.youtube.com/watch?v=YOUR_DEMO_VIDEO_ID
 
 ## Key Features
 

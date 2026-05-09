@@ -128,8 +128,11 @@ node test-devnet.js
 ## Deployment Status
 
 **Devnet**: ✅ Full functionality verified
-**Mainnet**: 🔄 Ready to deploy (pending SOL funding)
-**Hosting**: 🔄 Railway/Render ready (Docker-compatible)
+**Mainnet**: ✅ Deployed and live
+**Frontend**: https://paystream-gamma.vercel.app
+**Backend**: https://your-paystream-backend.railway.app
+**GitHub**: https://github.com/LordKaiRex/paystream
+**Hosting**: Railway (backend) + Vercel (frontend)
 
 ---
 

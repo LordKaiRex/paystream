@@ -6,6 +6,7 @@
 <title>PayStream — Enterprise Solana Payroll</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="api-client.js"></script>
 <style>
   :root {
     --bg: #080b11;
@@ -2005,7 +2006,34 @@
   }
 
   function toggleWallet() {
-    alert('Wallet: 7xKpQr8mN4aBcDeFgH9iJkLmNoPqRsTuVwXyZ4mNq');
+    if (window.paystream.wallet.isConnected) {
+      // Disconnect
+      window.paystream.wallet.disconnect();
+      updateWalletUI(false);
+    } else {
+      // Connect
+      window.paystream.wallet.connect().then(() => {
+        updateWalletUI(true);
+        // Reload dashboard data with real wallet
+        loadDashboardData();
+      }).catch(err => {
+        alert('Wallet connection failed: ' + err.message);
+      });
+    }
+  }
+  
+  function updateWalletUI(connected) {
+    const walletChip = document.querySelector('.wallet-chip');
+    const walletAddr = document.querySelector('.wallet-addr');
+    const walletDot = document.querySelector('.wallet-dot');
+    
+    if (connected && window.paystream.wallet.publicKey) {
+      walletAddr.textContent = window.paystream.wallet.getShortAddress();
+      walletDot.style.background = 'var(--success)';
+    } else {
+      walletAddr.textContent = 'Connect Wallet';
+      walletDot.style.background = 'var(--error)';
+    }
   }
 
   // Close modals on background click
@@ -2017,10 +2045,13 @@
 
   // Fetch prices (placeholder)
   window.addEventListener('load', () => {
-    document.getElementById('solPrice').textContent = '$195.42';
-    document.getElementById('solChange').textContent = '+2.1%';
-    document.getElementById('jupPrice').textContent = '$0.876';
-    document.getElementById('jupChange').textContent = '+1.3%';
+    // Initialize PayStream API client
+    // Replace with your actual Railway backend URL
+    const backendURL = 'https://your-paystream-backend.railway.app';
+    window.paystream = new PayStreamManager(backendURL);
+    
+    // Load initial data
+    loadDashboardData();
     
     // Setup navigation
     setupNavigation();
@@ -2028,6 +2059,64 @@
     // Render initial payroll schedule
     renderPayrollSchedule();
   });
+  
+  // Load real data from backend
+  async function loadDashboardData() {
+    try {
+      // Load treasury info
+      const treasury = await window.paystream.api.getTreasury(window.paystream.wallet.publicKey?.toBase58() || 'demo');
+      updateTreasuryDisplay(treasury);
+      
+      // Load prices
+      const prices = await window.paystream.api.getPrices();
+      updatePriceTicker(prices);
+      
+      // Load payments
+      const payments = await window.paystream.api.getPaymentsDue();
+      updatePaymentsList(payments);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      // Fallback to demo data
+    }
+  }
+  
+  function updateTreasuryDisplay(treasury) {
+    // Update vault display with real Kamino data
+    if (treasury && treasury.balance) {
+      document.getElementById('vaultAmount').textContent = `$${treasury.balance.toLocaleString()}`;
+      document.getElementById('vaultAPY').textContent = `${treasury.apy || 7.2}%`;
+    }
+  }
+  
+  function updatePriceTicker(prices) {
+    // Update with real Birdeye prices
+    if (prices && prices.SOL) {
+      document.getElementById('solPrice').textContent = `$${prices.SOL.price.toFixed(2)}`;
+      document.getElementById('solChange').textContent = `${prices.SOL.change24h >= 0 ? '+' : ''}${prices.SOL.change24h.toFixed(1)}%`;
+    }
+    if (prices && prices.USDC) {
+      document.getElementById('usdcPrice').textContent = `$${prices.USDC.price.toFixed(4)}`;
+    }
+  }
+  
+  function updatePaymentsList(payments) {
+    // Update with real payment data
+    if (payments && payments.length > 0) {
+      // Merge with existing demo data or replace
+      scheduledPayments = payments.map(p => ({
+        id: p.id,
+        contractorName: p.contractorName || 'Unknown',
+        contractorWallet: p.walletAddress,
+        amountUSDC: p.amount,
+        frequency: p.frequency || 'once',
+        nextPaymentDate: new Date(p.nextPayment).toLocaleDateString(),
+        country: '🌍 Global',
+        avatarBg: getRandomColor(),
+        initials: (p.contractorName || 'U').substring(0, 2).toUpperCase()
+      }));
+      renderPayrollSchedule();
+    }
+  }
 </script>
 
 </body>
