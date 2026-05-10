@@ -2065,14 +2065,33 @@
   async function addPayment() {
     const name = document.getElementById('inp-name').value.trim();
     const wallet = document.getElementById('inp-wallet').value.trim();
-    const amount = parseFloat(document.getElementById('inp-amount').value);
+    const amountStr = document.getElementById('inp-amount').value.trim();
     const frequency = document.getElementById('inp-freq').value;
     const date = document.getElementById('inp-date').value;
 
-    if (!name || !wallet || !amount || !date) {
-      alert('Please fill in all required fields');
+    // Validate required fields
+    if (!name) {
+      alert('Please enter a contractor name');
+      document.getElementById('inp-name').focus();
       return;
     }
+    if (!wallet) {
+      alert('Please enter a contractor wallet address');
+      document.getElementById('inp-wallet').focus();
+      return;
+    }
+    if (!amountStr || isNaN(parseFloat(amountStr)) || parseFloat(amountStr) <= 0) {
+      alert('Please enter a valid payment amount greater than 0');
+      document.getElementById('inp-amount').focus();
+      return;
+    }
+    if (!date) {
+      alert('Please select a payment date');
+      document.getElementById('inp-date').focus();
+      return;
+    }
+
+    const amount = parseFloat(amountStr);
 
     const payload = {
       contractorName: name,
@@ -2132,14 +2151,33 @@
 
     const name = document.getElementById('inp-name').value.trim();
     const wallet = document.getElementById('inp-wallet').value.trim();
-    const amount = parseFloat(document.getElementById('inp-amount').value);
+    const amountStr = document.getElementById('inp-amount').value.trim();
     const frequency = document.getElementById('inp-freq').value;
     const date = document.getElementById('inp-date').value;
 
-    if (!name || !wallet || !amount || !date) {
-      alert('Please fill in all required fields');
+    // Validate required fields
+    if (!name) {
+      alert('Please enter a contractor name');
+      document.getElementById('inp-name').focus();
       return;
     }
+    if (!wallet) {
+      alert('Please enter a contractor wallet address');
+      document.getElementById('inp-wallet').focus();
+      return;
+    }
+    if (!amountStr || isNaN(parseFloat(amountStr)) || parseFloat(amountStr) <= 0) {
+      alert('Please enter a valid payment amount greater than 0');
+      document.getElementById('inp-amount').focus();
+      return;
+    }
+    if (!date) {
+      alert('Please select a payment date');
+      document.getElementById('inp-date').focus();
+      return;
+    }
+
+    const amount = parseFloat(amountStr);
 
     payment.contractorName = name;
     payment.contractorWallet = wallet;
