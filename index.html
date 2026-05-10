@@ -195,6 +195,17 @@
     letter-spacing: 0.08em;
   }
 
+  .hero-note {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-light);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
   .wallet-chip {
     display: flex;
     align-items: center;
@@ -1202,6 +1213,7 @@
             <div class="hero-label">Modern payroll stack</div>
             <div class="hero-title">Run global Solana payroll with treasury yield built in.</div>
             <div class="hero-text">PayStream combines contractor payroll, treasury management, and Kamino yield automation in a single modern dashboard designed for fast-moving teams.</div>
+            <div class="hero-note">Live deploy marker: v3 / commit d4705bf</div>
             <div class="hero-actions">
               <button class="btn btn-primary" onclick="openModal('addPaymentModal')">Schedule payment</button>
               <button class="btn btn-secondary" onclick="showPage('treasury', document.getElementById('navTreasury'))">View treasury</button>
