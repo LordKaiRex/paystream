@@ -1821,6 +1821,7 @@
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('Loaded stored payments:', parsed.length);
           return parsed;
         }
       }
@@ -1829,6 +1830,7 @@
     }
 
     // Always return defaults for demo
+    console.log('Loading default payments');
     const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
     window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(defaults));
     window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
@@ -2041,11 +2043,6 @@
   }
 
   async function addPayment() {
-    if (!window.paystream?.wallet?.isConnected) {
-      alert('Please connect your wallet before scheduling payroll.');
-      return;
-    }
-
     const name = document.getElementById('inp-name').value.trim();
     const wallet = document.getElementById('inp-wallet').value.trim();
     const amount = parseFloat(document.getElementById('inp-amount').value);
@@ -2066,8 +2063,12 @@
     };
 
     try {
-      const created = await window.paystream.addPayment(payload);
-      const payment = mapApiPaymentToDisplay(created);
+      // For demo, add locally without API call
+      const payment = mapApiPaymentToDisplay({
+        id: 'pay_' + Date.now(),
+        ...payload,
+        nextPaymentDate: new Date(date).toISOString(),
+      });
 
       scheduledPayments = [payment, ...scheduledPayments.filter((p) => p.id !== payment.id)];
       saveScheduledPayments();
@@ -2077,7 +2078,7 @@
       closeModal('addPaymentModal');
     } catch (err) {
       console.error('Failed to schedule payment:', err);
-      alert('Unable to schedule payment. Please try again or check your wallet connection.');
+      alert('Unable to schedule payment. Please try again.');;
     }
   }
 
