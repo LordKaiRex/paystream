@@ -1798,13 +1798,14 @@
       const stored = window.localStorage.getItem('paystreamScheduledPayments');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
         }
       }
     } catch (err) {
       console.warn('Failed to load saved payments:', err);
     }
+    // Always return defaults if no stored payments or empty
     return JSON.parse(JSON.stringify(defaultScheduledPayments));
   }
 
