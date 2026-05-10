@@ -40,7 +40,7 @@ export async function dbAddPayment(payment) {
 
   const record = {
     network: NETWORK,
-    business_wallet: payment.businessWallet,
+    business_wallet: payment.businessWallet || "",
     contractor_wallet: payment.contractorWallet,
     contractor_name: payment.contractorName,
     amount_usdc: payment.amountUSDC,

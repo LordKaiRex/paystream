@@ -356,7 +356,8 @@ Update `FRONTEND_URL` in `.env` after deployment.
 - `GET /api/payments/due` — Get payments due today
 - `GET /api/payments/business/:wallet` — Get all payments for business
 - `POST /api/payments/add` — Schedule new payment
-  - Body: `{ contractorName, contractorWallet, amountUSDC, frequency, nextPaymentDate }`
+  - Body: `{ contractorName, contractorWallet, amountUSDC, frequency, nextPaymentDate, businessWallet? }`
+  - `businessWallet` is optional; schedule payments without connecting a wallet
 - `POST /api/payments/run` — Manual payroll trigger (demo)
   - Header: `x-admin-secret: <ADMIN_SECRET>`
 

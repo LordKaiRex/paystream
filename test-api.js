@@ -136,6 +136,17 @@ async function runTests() {
     assert(status === 400, `Expected 400, got ${status}`);
   });
 
+  await test("Accept valid payment without business wallet", async () => {
+    const { status, data } = await request("POST", "/api/payments/add", {
+      contractorWallet: testContractorWallet,
+      contractorName: "Test Contractor",
+      amountUSDC: 100,
+      frequency: "monthly",
+    });
+    assert(status === 200, `Expected 200, got ${status}`);
+    assert(data.success === true, "Should return success");
+  });
+
   // Success Cases
   console.log("\n✅ Success Cases");
   console.log("─".repeat(60));

@@ -414,7 +414,13 @@ export async function getDuePayments(date = new Date()) {
 
 export async function addPayment(payment) {
   const id = "pay_" + Date.now();
-  const entry = { id, status: "active", ...payment };
+  const entry = {
+    id,
+    status: "active",
+    ...payment,
+    businessWallet: payment.businessWallet || "",
+  };
+
   paymentsDB.push(entry);
   return entry;
 }

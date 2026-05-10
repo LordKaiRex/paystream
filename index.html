@@ -1813,9 +1813,29 @@
   ];
 
   const scheduleDefaultsVersion = 2;
-  let scheduledPayments = loadScheduledPayments();
+  let scheduledPayments = [];
 
-  function loadScheduledPayments() {
+  // Initialize payments asynchronously
+  async function initScheduledPayments() {
+    scheduledPayments = await loadScheduledPayments();
+    renderPayrollSchedule();
+  }
+
+  async function loadScheduledPayments() {
+    // If wallet is connected, try to load from API
+    if (window.paystream.wallet.isConnected && window.paystream.wallet.publicKey) {
+      try {
+        const response = await window.paystream.api.getBusinessPayments(window.paystream.wallet.publicKey.toBase58());
+        if (response.success && response.data) {
+          console.log('Loaded payments from API:', response.data.length);
+          return response.data.map(mapApiPaymentToDisplay);
+        }
+      } catch (err) {
+        console.warn('Failed to load payments from API, falling back to localStorage:', err.message);
+      }
+    }
+
+    // Fallback to localStorage
     try {
       const stored = window.localStorage.getItem('paystreamScheduledPayments');
       if (stored) {
@@ -2062,20 +2082,26 @@
       nextPaymentDate: new Date(date).toISOString(),
     };
 
-    try {
-      // For demo, add locally without API call
-      const payment = mapApiPaymentToDisplay({
-        id: 'pay_' + Date.now(),
-        ...payload,
-        nextPaymentDate: new Date(date).toISOString(),
-      });
+    // Include business wallet only when connected
+    const walletAddress = window.paystream?.wallet?.publicKey?.toBase58();
+    if (walletAddress) {
+      payload.businessWallet = walletAddress;
+    }
 
-      scheduledPayments = [payment, ...scheduledPayments.filter((p) => p.id !== payment.id)];
-      saveScheduledPayments();
-      renderPayrollSchedule();
-      resetPaymentModal();
-      alert('Payment scheduled successfully!');
-      closeModal('addPaymentModal');
+    try {
+      // Call API to add payment (works without wallet connection)
+      const response = await window.paystream.api.addPayment(payload);
+      if (response.success) {
+        const payment = mapApiPaymentToDisplay(response.data);
+        scheduledPayments = [payment, ...scheduledPayments.filter((p) => p.id !== payment.id)];
+        saveScheduledPayments();
+        renderPayrollSchedule();
+        resetPaymentModal();
+        alert('Payment scheduled successfully!');
+        closeModal('addPaymentModal');
+      } else {
+        throw new Error(response.message || 'Failed to schedule payment');
+      }
     } catch (err) {
       console.error('Failed to schedule payment:', err);
       alert('Unable to schedule payment. Please try again.');;
@@ -2125,8 +2151,7 @@
     if (window.paystream.wallet.isConnected) {
       window.paystream.wallet.disconnect();
       updateWalletUI(false);
-      scheduledPayments = loadScheduledPayments();
-      renderPayrollSchedule();
+      initScheduledPayments();
       return;
     }
 
@@ -2219,10 +2244,9 @@
 window.addEventListener('load', async () => {
     const backendURL =
       window.PAYSTREAM_BACKEND_URL ||
-      window.location.origin ||
-      'https://your-paystream-backend.railway.app';
-
-    window.paystream = new PayStreamManager(backendURL);
+      (window.location.hostname === 'localhost'
+        ? 'http://localhost:3001'
+        : window.location.origin) ||
     await window.paystream.init();
 
     const provider = window.paystream.wallet.detect();
@@ -2243,6 +2267,7 @@ window.addEventListener('load', async () => {
 
     loadSettings();
     setupNavigation();
+    await initScheduledPayments();
     renderPayrollSchedule();
   });
   
@@ -2259,7 +2284,10 @@ window.addEventListener('load', async () => {
 
       updatePriceTicker(prices);
       if (treasury) updateTreasuryDisplay(treasury);
-      updatePaymentsList(payments);
+      if (payments && payments.success && payments.data) {
+        scheduledPayments = payments.data.map(mapApiPaymentToDisplay);
+        renderPayrollSchedule();
+      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       if (!window.paystream.wallet.isConnected) {

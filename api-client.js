@@ -310,10 +310,12 @@ class PayStreamManager {
    */
   async addPayment(paymentData) {
     try {
-      const response = await this.api.addPayment({
-        businessWallet: this.wallet.publicKey.toBase58(),
-        ...paymentData,
-      });
+      const payload = { ...paymentData };
+      if (this.wallet.publicKey) {
+        payload.businessWallet = this.wallet.publicKey.toBase58();
+      }
+
+      const response = await this.api.addPayment(payload);
 
       if (response.success) {
         await this.loadPayments();
