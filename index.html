@@ -1817,9 +1817,8 @@
 
   function loadScheduledPayments() {
     try {
-      const storedVersion = parseInt(window.localStorage.getItem('paystreamScheduleVersion'), 10);
       const stored = window.localStorage.getItem('paystreamScheduledPayments');
-      if (stored && storedVersion === scheduleDefaultsVersion) {
+      if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
@@ -1829,6 +1828,7 @@
       console.warn('Failed to load saved payments:', err);
     }
 
+    // Always return defaults for demo
     const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
     window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(defaults));
     window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
