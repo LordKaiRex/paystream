@@ -1791,12 +1791,14 @@
     }
   ];
 
+  const scheduleDefaultsVersion = 2;
   let scheduledPayments = loadScheduledPayments();
 
   function loadScheduledPayments() {
     try {
+      const storedVersion = parseInt(window.localStorage.getItem('paystreamScheduleVersion'), 10);
       const stored = window.localStorage.getItem('paystreamScheduledPayments');
-      if (stored) {
+      if (stored && storedVersion === scheduleDefaultsVersion) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
@@ -1805,13 +1807,17 @@
     } catch (err) {
       console.warn('Failed to load saved payments:', err);
     }
-    // Always return defaults if no stored payments or empty
-    return JSON.parse(JSON.stringify(defaultScheduledPayments));
+
+    const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
+    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(defaults));
+    window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
+    return defaults;
   }
 
   function saveScheduledPayments() {
     try {
       window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(scheduledPayments));
+      window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
     } catch (err) {
       console.warn('Failed to save scheduled payments:', err);
     }
