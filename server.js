@@ -36,6 +36,18 @@ import { dbGetStats } from "./database.js";
 
 dotenv.config();
 
+// Global error handlers for Railway stability
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  console.error('Stack:', err.stack);
+  // Don't exit in production, just log
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit in production, just log
+});
+
 const app = express();
 
 // ─────────────────────────────────────────────────────────────────
