@@ -1117,7 +1117,7 @@
         <span class="icon">💸</span> Payroll
         <span class="badge">3</span>
       </div>
-      <div class="nav-item" onclick="showPage('treasury', this)">
+      <div id="navTreasury" class="nav-item" onclick="showPage('treasury', this)">
         <span class="icon">🏦</span> Treasury
       </div>
       <div class="nav-item" onclick="showPage('analytics', this)">
@@ -1165,8 +1165,8 @@
         </div>
         <div class="ticker-item">
           <span class="ticker-symbol">USDC</span>
-          <span class="ticker-price">$1.00</span>
-          <span class="ticker-change pos">+0.00%</span>
+          <span class="ticker-price" id="usdcPrice">$1.00</span>
+          <span class="ticker-change pos" id="usdcChange">+0.00%</span>
         </div>
         <div class="ticker-item" style="border-right:none;">
           <span class="ticker-symbol">JUP</span>
@@ -1194,7 +1194,7 @@
             <div class="hero-text">PayStream combines contractor payroll, treasury management, and Kamino yield automation in a single modern dashboard designed for fast-moving teams.</div>
             <div class="hero-actions">
               <button class="btn btn-primary" onclick="openModal('addPaymentModal')">Schedule payment</button>
-              <button class="btn btn-secondary">View treasury</button>
+              <button class="btn btn-secondary" onclick="showPage('treasury', document.getElementById('navTreasury'))">View treasury</button>
             </div>
           </div>
           <div class="hero-figure">
@@ -1255,18 +1255,18 @@
                 <div style="width: 18px; height: 18px; background: var(--accent-light); border: 2px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 10px; font-weight: 700;">$</div>
                 <div class="card-title">Treasury Overview</div>
                 <div class="tabs">
-                  <div class="tab active">Month</div>
-                  <div class="tab">Quarter</div>
+                  <div class="tab active" data-range="month" onclick="selectYieldRange(this, 'month')">Month</div>
+                  <div class="tab" data-range="quarter" onclick="selectYieldRange(this, 'quarter')">Quarter</div>
                 </div>
               </div>
               <div class="card-body">
                 <div class="vault-display">
-                  <div class="vault-amount">$48,250.00</div>
+                  <div class="vault-amount" id="vaultAmount">$48,250.00</div>
                   <div class="vault-label">TOTAL VAULT BALANCE</div>
 
                   <div class="kamino-badge">
                     <div class="yield-pulse"></div>
-                    Earning via Kamino · 7.2% APY · Auto-compounding
+                    Earning via Kamino · <span id="vaultAPY">7.2%</span> APY · Auto-compounding
                   </div>
 
                   <div class="vault-bar-wrap">
@@ -1282,13 +1282,13 @@
                       <div class="vb-value" style="color: var(--accent);">$34,050 <span style="font-size:12px;">(71%)</span></div>
                     </div>
                     <div class="vault-breakdown-item">
-                      <div class="vb-label">Yield This Month</div>
-                      <div class="vb-value" style="color: var(--success);">+$289.40</div>
+                      <div class="vb-label" id="yieldRangeLabel">Yield This Month</div>
+                      <div class="vb-value" id="yieldRangeValue" style="color: var(--success);">+$289.40</div>
                     </div>
                   </div>
                   <div class="vault-actions">
                     <button class="btn btn-primary" onclick="openModal('depositModal')">⬆️ Deposit</button>
-                    <button class="btn btn-secondary">⬇️ Withdraw</button>
+                    <button class="btn btn-secondary" onclick="withdraw()">⬇️ Withdraw</button>
                   </div>
                 </div>
               </div>
@@ -1459,7 +1459,7 @@
               </div>
               <div class="vault-actions">
                 <button class="btn btn-primary" onclick="openModal('depositModal')">⬆️ Deposit</button>
-                <button class="btn btn-secondary">⬇️ Withdraw</button>
+                <button class="btn btn-secondary" onclick="withdraw()">⬇️ Withdraw</button>
               </div>
             </div>
           </div>
@@ -1653,7 +1653,7 @@
                     <div style="font-size: 12px; color: var(--text-muted);">Receive payment confirmations</div>
                   </div>
                   <label class="switch">
-                    <input type="checkbox" checked>
+                    <input type="checkbox" id="emailNotificationsToggle" checked>
                     <span class="slider"></span>
                   </label>
                 </div>
@@ -1663,9 +1663,14 @@
                     <div style="font-size: 12px; color: var(--text-muted);">Automatically withdraw yield before payroll</div>
                   </div>
                   <label class="switch">
-                    <input type="checkbox" checked>
+                    <input type="checkbox" id="autoWithdrawToggle" checked>
                     <span class="slider"></span>
                   </label>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+                  <label style="font-weight: 600;">Business Email</label>
+                  <input type="email" id="emailInput" placeholder="finance@paystream.com" style="width:100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text);">
+                  <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
                 </div>
               </div>
             </div>
@@ -1705,7 +1710,7 @@
 
 <script>
   // Local payments storage (in a real app, this would be persisted to a database)
-  let scheduledPayments = [
+  const defaultScheduledPayments = [
     {
       id: "pay_001",
       contractorName: "Alex Rivera",
@@ -1751,6 +1756,31 @@
       initials: "JK"
     }
   ];
+
+  let scheduledPayments = loadScheduledPayments();
+
+  function loadScheduledPayments() {
+    try {
+      const stored = window.localStorage.getItem('paystreamScheduledPayments');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load saved payments:', err);
+    }
+    return JSON.parse(JSON.stringify(defaultScheduledPayments));
+  }
+
+  function saveScheduledPayments() {
+    try {
+      window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(scheduledPayments));
+    } catch (err) {
+      console.warn('Failed to save scheduled payments:', err);
+    }
+  }
 
   // Page navigation
   function showPage(page, element) {
@@ -1844,6 +1874,23 @@
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  function mapApiPaymentToDisplay(payment) {
+    const date = payment.nextPaymentDate ? new Date(payment.nextPaymentDate) : null;
+    return {
+      id: payment.id,
+      contractorName: payment.contractorName || payment.contractor_name || 'Unknown',
+      contractorWallet: payment.contractorWallet || payment.contractor_wallet || 'Unknown',
+      amountUSDC: payment.amountUSDC || payment.amount_usdc || 0,
+      frequency: payment.frequency || payment.frequency || 'once',
+      nextPaymentDate: date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD',
+      country: payment.country || '🌍 Global',
+      avatarBg: payment.avatarBg || getRandomColor(),
+      initials: payment.contractorName
+        ? payment.contractorName.split(' ').map((n) => n[0]).join('').toUpperCase()
+        : 'UN',
+    };
+  }
+
   function renderPayrollSchedule() {
     const scheduleLists = document.querySelectorAll('#scheduleList, #page-payroll .schedule-list');
     if (!scheduleLists.length) return;
@@ -1931,45 +1978,45 @@
     document.getElementById('paymentModalSubmit').textContent = '💸 Schedule Payment';
   }
 
-  function addPayment() {
-    // Get form values
+  async function addPayment() {
+    if (!window.paystream?.wallet?.isConnected) {
+      alert('Please connect your wallet before scheduling payroll.');
+      return;
+    }
+
     const name = document.getElementById('inp-name').value.trim();
     const wallet = document.getElementById('inp-wallet').value.trim();
     const amount = parseFloat(document.getElementById('inp-amount').value);
     const frequency = document.getElementById('inp-freq').value;
     const date = document.getElementById('inp-date').value;
 
-    // Validate required fields
     if (!name || !wallet || !amount || !date) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // Create payment object
-    const payment = {
-      id: "pay_" + Date.now(),
+    const payload = {
       contractorName: name,
       contractorWallet: wallet,
       amountUSDC: amount,
-      frequency: frequency,
-      nextPaymentDate: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      country: "🌍 Global", // Default country flag
-      avatarBg: getRandomColor(),
-      initials: name.split(' ').map(n => n[0]).join('').toUpperCase()
+      frequency,
+      nextPaymentDate: new Date(date).toISOString(),
     };
 
-    // Add to payments array
-    scheduledPayments.push(payment);
+    try {
+      const created = await window.paystream.addPayment(payload);
+      const payment = mapApiPaymentToDisplay(created);
 
-    // Clear form
-    resetPaymentModal();
-
-    // Update the UI
-    renderPayrollSchedule();
-
-    // Show success message
-    alert('Payment scheduled successfully!');
-    closeModal('addPaymentModal');
+      scheduledPayments = [payment, ...scheduledPayments.filter((p) => p.id !== payment.id)];
+      saveScheduledPayments();
+      renderPayrollSchedule();
+      resetPaymentModal();
+      alert('Payment scheduled successfully!');
+      closeModal('addPaymentModal');
+    } catch (err) {
+      console.error('Failed to schedule payment:', err);
+      alert('Unable to schedule payment. Please try again or check your wallet connection.');
+    }
   }
 
   function updatePayment(paymentId) {
@@ -1993,6 +2040,7 @@
     payment.frequency = frequency;
     payment.nextPaymentDate = new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     payment.initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+    saveScheduledPayments();
 
     resetPaymentModal();
     renderPayrollSchedule();
@@ -2006,34 +2054,95 @@
   }
 
   function toggleWallet() {
+    if (!window.paystream) {
+      alert('PayStream is not initialized yet.');
+      return;
+    }
+
     if (window.paystream.wallet.isConnected) {
-      // Disconnect
       window.paystream.wallet.disconnect();
       updateWalletUI(false);
-    } else {
-      // Connect
-      window.paystream.wallet.connect().then(() => {
-        updateWalletUI(true);
-        // Reload dashboard data with real wallet
-        loadDashboardData();
-      }).catch(err => {
-        alert('Wallet connection failed: ' + err.message);
-      });
+      scheduledPayments = loadScheduledPayments();
+      renderPayrollSchedule();
+      return;
     }
+
+    window.paystream.connectWallet().then((publicKey) => {
+      updateWalletUI(true);
+      if (publicKey) {
+        loadDashboardData();
+      }
+    }).catch(err => {
+      alert('Wallet connection failed: ' + err.message);
+    });
   }
   
   function updateWalletUI(connected) {
-    const walletChip = document.querySelector('.wallet-chip');
     const walletAddr = document.querySelector('.wallet-addr');
     const walletDot = document.querySelector('.wallet-dot');
-    
+    const provider = window.paystream?.wallet?.detect?.() || null;
+
     if (connected && window.paystream.wallet.publicKey) {
-      walletAddr.textContent = window.paystream.wallet.getShortAddress();
+      walletAddr.textContent = `${window.paystream.wallet.getShortAddress()} (${window.paystream.wallet.getWalletName()})`;
       walletDot.style.background = 'var(--success)';
+      return;
+    }
+
+    if (provider) {
+      const walletName = provider.isSolflare ? 'Solflare' : provider.isPhantom ? 'Phantom' : 'Wallet';
+      walletAddr.textContent = `Connect ${walletName}`;
+      walletDot.style.background = 'var(--warning)';
     } else {
-      walletAddr.textContent = 'Connect Wallet';
+      walletAddr.textContent = 'Install Solflare';
       walletDot.style.background = 'var(--error)';
     }
+  }
+
+  function selectYieldRange(el, range) {
+    document.querySelectorAll('.tabs .tab').forEach(tab => tab.classList.remove('active'));
+    el.classList.add('active');
+
+    const label = document.getElementById('yieldRangeLabel');
+    const value = document.getElementById('yieldRangeValue');
+
+    if (range === 'quarter') {
+      label.textContent = 'Yield This Quarter';
+      value.textContent = '+$842.30';
+    } else {
+      label.textContent = 'Yield This Month';
+      value.textContent = '+$289.40';
+    }
+  }
+
+  function withdraw() {
+    alert('Withdraw request sent to treasury.');
+  }
+
+  function saveSettings() {
+    const email = document.getElementById('emailInput').value.trim();
+    const emailNotifications = document.getElementById('emailNotificationsToggle').checked;
+    const autoWithdraw = document.getElementById('autoWithdrawToggle').checked;
+
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    const settings = {
+      email,
+      emailNotifications,
+      autoWithdraw,
+    };
+
+    window.localStorage.setItem('paystreamSettings', JSON.stringify(settings));
+    alert('Settings saved successfully!');
+  }
+
+  function loadSettings() {
+    const settings = JSON.parse(window.localStorage.getItem('paystreamSettings') || '{}');
+    if (settings.email) document.getElementById('emailInput').value = settings.email;
+    document.getElementById('emailNotificationsToggle').checked = settings.emailNotifications !== false;
+    document.getElementById('autoWithdrawToggle').checked = settings.autoWithdraw !== false;
   }
 
   // Close modals on background click
@@ -2044,39 +2153,55 @@
   });
 
   // Fetch prices (placeholder)
-  window.addEventListener('load', () => {
-    // Initialize PayStream API client
-    // Replace with your actual Railway backend URL
-    const backendURL = 'https://your-paystream-backend.railway.app';
+window.addEventListener('load', async () => {
+    const backendURL =
+      window.PAYSTREAM_BACKEND_URL ||
+      window.location.origin ||
+      'https://your-paystream-backend.railway.app';
+
     window.paystream = new PayStreamManager(backendURL);
-    
-    // Load initial data
-    loadDashboardData();
-    
-    // Setup navigation
+    await window.paystream.init();
+
+    const provider = window.paystream.wallet.detect();
+    const alreadyConnected = provider?.isConnected;
+
+    if (alreadyConnected) {
+      try {
+        await window.paystream.connectWallet();
+        updateWalletUI(true);
+        await loadDashboardData();
+      } catch (err) {
+        console.warn('Existing wallet connection could not be restored:', err);
+        updateWalletUI(false);
+      }
+    } else {
+      updateWalletUI(false);
+    }
+
+    loadSettings();
     setupNavigation();
-    
-    // Render initial payroll schedule
     renderPayrollSchedule();
   });
   
   // Load real data from backend
   async function loadDashboardData() {
     try {
-      // Load treasury info
-      const treasury = await window.paystream.api.getTreasury(window.paystream.wallet.publicKey?.toBase58() || 'demo');
-      updateTreasuryDisplay(treasury);
-      
-      // Load prices
-      const prices = await window.paystream.api.getPrices();
+      const walletAddress = window.paystream.wallet.publicKey?.toBase58();
+
+      const [prices, treasury, payments] = await Promise.all([
+        window.paystream.api.getPrices(),
+        walletAddress ? window.paystream.api.getTreasury(walletAddress) : Promise.resolve(null),
+        walletAddress ? window.paystream.api.getBusinessPayments(walletAddress) : Promise.resolve([]),
+      ]);
+
       updatePriceTicker(prices);
-      
-      // Load payments
-      const payments = await window.paystream.api.getPaymentsDue();
+      if (treasury) updateTreasuryDisplay(treasury);
       updatePaymentsList(payments);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      // Fallback to demo data
+      if (!window.paystream.wallet.isConnected) {
+        alert('Unable to connect to backend. Using offline demo data.');
+      }
     }
   }
   
@@ -2089,33 +2214,31 @@
   }
   
   function updatePriceTicker(prices) {
-    // Update with real Birdeye prices
-    if (prices && prices.SOL) {
+    if (!prices) return;
+
+    if (prices.SOL) {
       document.getElementById('solPrice').textContent = `$${prices.SOL.price.toFixed(2)}`;
       document.getElementById('solChange').textContent = `${prices.SOL.change24h >= 0 ? '+' : ''}${prices.SOL.change24h.toFixed(1)}%`;
     }
-    if (prices && prices.USDC) {
+
+    if (prices.USDC) {
       document.getElementById('usdcPrice').textContent = `$${prices.USDC.price.toFixed(4)}`;
+      document.getElementById('usdcChange').textContent = `${prices.USDC.change24h >= 0 ? '+' : ''}${prices.USDC.change24h.toFixed(1)}%`;
+    }
+
+    if (prices.JUP) {
+      document.getElementById('jupPrice').textContent = `$${prices.JUP.price.toFixed(2)}`;
+      document.getElementById('jupChange').textContent = `${prices.JUP.change24h >= 0 ? '+' : ''}${prices.JUP.change24h.toFixed(1)}%`;
     }
   }
   
   function updatePaymentsList(payments) {
-    // Update with real payment data
     if (payments && payments.length > 0) {
-      // Merge with existing demo data or replace
-      scheduledPayments = payments.map(p => ({
-        id: p.id,
-        contractorName: p.contractorName || 'Unknown',
-        contractorWallet: p.walletAddress,
-        amountUSDC: p.amount,
-        frequency: p.frequency || 'once',
-        nextPaymentDate: new Date(p.nextPayment).toLocaleDateString(),
-        country: '🌍 Global',
-        avatarBg: getRandomColor(),
-        initials: (p.contractorName || 'U').substring(0, 2).toUpperCase()
-      }));
-      renderPayrollSchedule();
+      scheduledPayments = payments.map(mapApiPaymentToDisplay);
+      saveScheduledPayments();
     }
+
+    renderPayrollSchedule();
   }
 </script>
 

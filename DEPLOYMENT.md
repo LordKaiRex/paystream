@@ -163,12 +163,22 @@ REACT_APP_API_URL=https://paystream-[random].railway.app
 
 ### 3.4 Update API Client
 
-In `index.html`, initialize with your backend URL:
+In `index.html`, initialize with your backend URL.
+
+If the frontend and backend are deployed together, the app will use `window.location.origin` automatically.
+
+If the frontend is deployed separately, add a global override before the app scripts:
+
+```html
+<script>
+  window.PAYSTREAM_BACKEND_URL = 'https://paystream-[random].railway.app';
+</script>
+```
+
+Then initialize the manager normally:
 
 ```javascript
-// After page loads
-const api = new PayStreamAPI('https://paystream-[random].railway.app');
-const manager = new PayStreamManager('https://paystream-[random].railway.app');
+const manager = new PayStreamManager(window.PAYSTREAM_BACKEND_URL || window.location.origin);
 await manager.init();
 ```
 

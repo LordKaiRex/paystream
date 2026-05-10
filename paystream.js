@@ -220,6 +220,7 @@ export async function buildKaminoWithdrawTx({ wallet, amountUSDC }) {
 export async function getTokenPrices(tokenAddresses = [
   CURRENT_TOKENS.SOL.toBase58(),
   CURRENT_TOKENS.USDC.toBase58(),
+  CURRENT_TOKENS.JUP.toBase58(),
 ]) {
   try {
     const addressList = tokenAddresses.join(",");
@@ -251,6 +252,7 @@ export async function getTokenPrices(tokenAddresses = [
     return {
       [CURRENT_TOKENS.SOL.toBase58()]: { price: IS_DEVNET ? 145.00 : 148.42, change24h: 2.1, symbol: "SOL" },
       [CURRENT_TOKENS.USDC.toBase58()]: { price: 1.00, change24h: 0, symbol: "USDC" },
+      [CURRENT_TOKENS.JUP.toBase58()]: { price: IS_DEVNET ? 0.05 : 0.12, change24h: 1.8, symbol: "JUP" },
     };
   }
 }
@@ -259,6 +261,7 @@ function getSymbolForAddress(addr) {
   const map = {
     [CURRENT_TOKENS.SOL.toBase58()]: "SOL",
     [CURRENT_TOKENS.USDC.toBase58()]: "USDC",
+    [CURRENT_TOKENS.JUP.toBase58()]: "JUP",
   };
   return map[addr] || addr.slice(0, 4);
 }

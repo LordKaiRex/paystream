@@ -91,9 +91,10 @@ async function runTests() {
   });
 
   await test("Root endpoint", async () => {
-    const { status, data } = await request("GET", "/");
-    assert(status === 200, `Expected 200, got ${status}`);
-    assert(data.name === "PayStream", "Invalid response");
+    const response = await fetch(`${BASE_URL}/`);
+    const text = await response.text();
+    assert(response.status === 200, `Expected 200, got ${response.status}`);
+    assert(text.includes("PayStream"), "Root HTML should include PayStream");
   });
 
   // Input Validation Tests
