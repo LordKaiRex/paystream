@@ -661,10 +661,11 @@
   }
 
   .schedule-info { flex: 1; min-width: 0; }
-  .schedule-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .schedule-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; line-height: 1.2; }
+  .schedule-name .tag { margin: 0; }
   .schedule-wallet { font-size: 11px; color: var(--text-light); font-family: 'Courier New', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .schedule-right { text-align: right; min-width: 120px; }
+  .schedule-right { text-align: right; min-width: 140px; }
   .schedule-amount { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
   .schedule-date { font-size: 11px; color: var(--text-muted); font-family: 'Courier New', monospace; }
 
@@ -1958,17 +1959,26 @@
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
+  function sanitizeField(value, fallback = '') {
+    if (value === undefined || value === null) return fallback;
+    const text = String(value).trim();
+    if (!text || text === 'undefined' || text === 'null') return fallback;
+    return text;
+  }
+
   function mapApiPaymentToDisplay(payment) {
     const date = payment.nextPaymentDate ? new Date(payment.nextPaymentDate) : null;
-    const name = payment.contractorName || payment.contractor_name || 'Unknown';
+    const name = sanitizeField(payment.contractorName || payment.contractor_name, 'Unknown');
+    const wallet = sanitizeField(payment.contractorWallet || payment.contractor_wallet, 'Unknown');
+    const country = sanitizeField(payment.country, '');
     return {
       id: payment.id,
       contractorName: name,
-      contractorWallet: payment.contractorWallet || payment.contractor_wallet || 'Unknown',
+      contractorWallet: wallet,
       amountUSDC: payment.amountUSDC || payment.amount_usdc || 0,
       frequency: payment.frequency || payment.frequency || 'once',
       nextPaymentDate: date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD',
-      country: payment.country || '',
+      country,
       avatarBg: payment.avatarBg || getRandomColor(),
       initials: name
         .split(' ')
@@ -2000,7 +2010,7 @@
         const walletText = payment.contractorWallet.length > 12
           ? `${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)}`
           : payment.contractorWallet;
-        const countryTag = payment.country ? `<span class="tag" style="margin-left: 6px;">${payment.country}</span>` : '';
+        const countryTag = payment.country ? `<span class="tag">${payment.country}</span>` : '';
 
         itemDiv.innerHTML = `
           <div class="avatar" style="background: ${payment.avatarBg};">${payment.initials}</div>
