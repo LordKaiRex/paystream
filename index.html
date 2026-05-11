@@ -660,11 +660,11 @@
     color: white;
   }
 
-  .schedule-info { flex: 1; }
-  .schedule-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .schedule-wallet { font-size: 11px; color: var(--text-light); font-family: 'Courier New', monospace; }
+  .schedule-info { flex: 1; min-width: 0; }
+  .schedule-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .schedule-wallet { font-size: 11px; color: var(--text-light); font-family: 'Courier New', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .schedule-right { text-align: right; }
+  .schedule-right { text-align: right; min-width: 120px; }
   .schedule-amount { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
   .schedule-date { font-size: 11px; color: var(--text-muted); font-family: 'Courier New', monospace; }
 
@@ -1960,18 +1960,21 @@
 
   function mapApiPaymentToDisplay(payment) {
     const date = payment.nextPaymentDate ? new Date(payment.nextPaymentDate) : null;
+    const name = payment.contractorName || payment.contractor_name || 'Unknown';
     return {
       id: payment.id,
-      contractorName: payment.contractorName || payment.contractor_name || 'Unknown',
+      contractorName: name,
       contractorWallet: payment.contractorWallet || payment.contractor_wallet || 'Unknown',
       amountUSDC: payment.amountUSDC || payment.amount_usdc || 0,
       frequency: payment.frequency || payment.frequency || 'once',
       nextPaymentDate: date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD',
-      country: payment.country || '🌍 Global',
+      country: payment.country || '',
       avatarBg: payment.avatarBg || getRandomColor(),
-      initials: payment.contractorName
-        ? payment.contractorName.split(' ').map((n) => n[0]).join('').toUpperCase()
-        : 'UN',
+      initials: name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase(),
     };
   }
 
@@ -1994,13 +1997,16 @@
                           `$${payment.amountUSDC.toLocaleString()} / ${payment.frequency === 'monthly' ? 'mo' : payment.frequency === 'weekly' ? 'week' : 'payrun'}`;
 
         const dateText = isDashboard ? `${payment.nextPaymentDate} · ${frequencyText}` : `Next: ${payment.nextPaymentDate}`;
-        const walletText = isDashboard ? `${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)}` : `${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)} · ${frequencyText}`;
+        const walletText = payment.contractorWallet.length > 12
+          ? `${payment.contractorWallet.substring(0, 8)}...${payment.contractorWallet.substring(payment.contractorWallet.length - 4)}`
+          : payment.contractorWallet;
+        const countryTag = payment.country ? `<span class="tag" style="margin-left: 6px;">${payment.country}</span>` : '';
 
         itemDiv.innerHTML = `
           <div class="avatar" style="background: ${payment.avatarBg};">${payment.initials}</div>
           <div class="schedule-info">
-            <div class="schedule-name">${payment.contractorName} <span class="tag" style="margin-left: 6px;">${payment.country}</span></div>
-            <div class="schedule-wallet">${walletText}</div>
+            <div class="schedule-name">${payment.contractorName}${countryTag}</div>
+            <div class="schedule-wallet">${walletText}${isDashboard ? '' : ` · ${frequencyText}`}</div>
           </div>
           <div class="schedule-right">
             <div class="schedule-amount">${amountText}</div>
