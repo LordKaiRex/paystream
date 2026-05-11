@@ -1843,7 +1843,7 @@
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
           console.log('Loaded stored payments:', parsed.length);
-          return parsed;
+          return parsed.map(mapApiPaymentToDisplay);
         }
       }
     } catch (err) {
@@ -1853,9 +1853,10 @@
     // Always return defaults for demo
     console.log('Loading default payments');
     const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
-    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(defaults));
+    const mappedDefaults = defaults.map(mapApiPaymentToDisplay);
+    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(mappedDefaults));
     window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
-    return defaults;
+    return mappedDefaults;
   }
 
   function saveScheduledPayments() {
@@ -2141,7 +2142,7 @@
       console.error('Failed to schedule payment:', err);
       // Demo mode: simulate successful payment scheduling
       console.log('Backend not available, using demo mode for payment scheduling');
-      const demoPayment = {
+      const demoPayment = mapApiPaymentToDisplay({
         id: 'demo_' + Date.now(),
         status: 'active',
         businessWallet: payload.businessWallet || '',
@@ -2150,8 +2151,9 @@
         amountUSDC: payload.amountUSDC,
         frequency: payload.frequency,
         nextPaymentDate: payload.nextPaymentDate,
+        country: '',
         createdAt: new Date().toISOString()
-      };
+      });
       scheduledPayments = [demoPayment, ...scheduledPayments.filter((p) => p.id !== demoPayment.id)];
       saveScheduledPayments();
       renderPayrollSchedule();
