@@ -1822,6 +1822,18 @@
     renderPayrollSchedule();
   }
 
+  function toStorablePayment(payment) {
+    return {
+      id: payment.id,
+      contractorName: payment.contractorName,
+      contractorWallet: payment.contractorWallet,
+      amountUSDC: payment.amountUSDC,
+      frequency: payment.frequency,
+      nextPaymentDate: payment.nextPaymentDate,
+      country: payment.country || '',
+    };
+  }
+
   async function loadScheduledPayments() {
     // If wallet is connected, try to load from API
     if (window.paystream.wallet.isConnected && window.paystream.wallet.publicKey) {
@@ -1850,18 +1862,19 @@
       console.warn('Failed to load saved payments:', err);
     }
 
-    // Always return defaults for demo
+    // Load defaults for demo
     console.log('Loading default payments');
     const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
-    const mappedDefaults = defaults.map(mapApiPaymentToDisplay);
-    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(mappedDefaults));
+    const storableDefaults = defaults.map(toStorablePayment);
+    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(storableDefaults));
     window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
-    return mappedDefaults;
+    return defaults.map(mapApiPaymentToDisplay);
   }
 
   function saveScheduledPayments() {
     try {
-      window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(scheduledPayments));
+      const storablePayments = scheduledPayments.map(toStorablePayment);
+      window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(storablePayments));
       window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
     } catch (err) {
       console.warn('Failed to save scheduled payments:', err);
