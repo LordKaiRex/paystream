@@ -1740,7 +1740,7 @@
       contractorWallet: "7xKpQr8mN4aBcDeFgH9iJkLmNoPqRsTuVwXyZ4mNq",
       amountUSDC: 3200,
       frequency: "biweekly",
-      nextPaymentDate: "May 1",
+      nextPaymentDate: "2026-05-01T00:00:00.000Z",
       country: "🇲🇽 Mexico",
       avatarBg: "var(--accent)",
       initials: "AR"
@@ -1751,7 +1751,7 @@
       contractorWallet: "9pQrAbCdEfGhIjKlMnOpQrStUvWxYz2bNw",
       amountUSDC: 4500,
       frequency: "monthly",
-      nextPaymentDate: "May 1",
+      nextPaymentDate: "2026-05-01T00:00:00.000Z",
       country: "🇧🇷 Brazil",
       avatarBg: "#4F46E5",
       initials: "MS"
@@ -1762,7 +1762,7 @@
       contractorWallet: "3mLsTuVwXyZ4mNq7xKpQr8mN4aBcDeFgH9iJk",
       amountUSDC: 2800,
       frequency: "biweekly",
-      nextPaymentDate: "May 1",
+      nextPaymentDate: "2026-05-01T00:00:00.000Z",
       country: "🇮🇳 India",
       avatarBg: "#10B981",
       initials: "PN"
@@ -1773,7 +1773,7 @@
       contractorWallet: "5nRt8dPq7xKpQr8mN4aBcDeFgH9iJkLmNoPqRs",
       amountUSDC: 1200,
       frequency: "weekly", 
-      nextPaymentDate: "Apr 30",
+      nextPaymentDate: "2026-04-30T00:00:00.000Z",
       country: "🇰🇷 Korea",
       avatarBg: "#F59E0B",
       initials: "JK"
@@ -1784,7 +1784,7 @@
       contractorWallet: "8oUvWxYz4mNq7xKpQr8mN4aBcDeFgH9iJkLmNo",
       amountUSDC: 3500,
       frequency: "monthly",
-      nextPaymentDate: "May 15",
+      nextPaymentDate: "2026-05-15T00:00:00.000Z",
       country: "🇨🇳 China",
       avatarBg: "#EF4444",
       initials: "LC"
@@ -1795,7 +1795,7 @@
       contractorWallet: "2kLmNoPqRsTuVwXyZ4mNq7xKpQr8mN4aBcDeFg",
       amountUSDC: 2900,
       frequency: "biweekly",
-      nextPaymentDate: "May 8",
+      nextPaymentDate: "2026-05-08T00:00:00.000Z",
       country: "🇬🇧 UK",
       avatarBg: "#8B5CF6",
       initials: "SP"
@@ -1806,7 +1806,7 @@
       contractorWallet: "6pQr8mN4aBcDeFgH9iJkLmNoPqRsTuVwXyZ4mN",
       amountUSDC: 4100,
       frequency: "monthly",
-      nextPaymentDate: "May 20",
+      nextPaymentDate: "2026-05-20T00:00:00.000Z",
       country: "🇪🇸 Spain",
       avatarBg: "#06B6D4",
       initials: "CG"
@@ -1848,36 +1848,43 @@
       }
     }
 
-    // Fallback to localStorage
+    // Fallback to localStorage first
     try {
       const stored = window.localStorage.getItem('paystreamScheduledPayments');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('Loaded stored payments:', parsed.length);
+          console.log('Loaded stored payments from localStorage:', parsed.length);
           return parsed.map(mapApiPaymentToDisplay);
         }
       }
     } catch (err) {
-      console.warn('Failed to load saved payments:', err);
+      console.warn('Failed to load saved payments from localStorage:', err);
     }
 
-    // Load defaults for demo
-    console.log('Loading default payments');
+    // Only load defaults if localStorage is empty
+    console.log('No stored payments found, loading demo defaults');
     const defaults = JSON.parse(JSON.stringify(defaultScheduledPayments));
     const storableDefaults = defaults.map(toStorablePayment);
-    window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(storableDefaults));
-    window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
+    // Save defaults to localStorage only once on first load
+    try {
+      window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(storableDefaults));
+      window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
+    } catch (err) {
+      console.warn('Failed to save default payments to localStorage:', err);
+    }
     return defaults.map(mapApiPaymentToDisplay);
   }
 
   function saveScheduledPayments() {
     try {
       const storablePayments = scheduledPayments.map(toStorablePayment);
-      window.localStorage.setItem('paystreamScheduledPayments', JSON.stringify(storablePayments));
+      const jsonStr = JSON.stringify(storablePayments);
+      window.localStorage.setItem('paystreamScheduledPayments', jsonStr);
       window.localStorage.setItem('paystreamScheduleVersion', `${scheduleDefaultsVersion}`);
+      console.log('Saved', storablePayments.length, 'payments to localStorage');
     } catch (err) {
-      console.warn('Failed to save scheduled payments:', err);
+      console.error('Failed to save scheduled payments:', err);
     }
   }
 
